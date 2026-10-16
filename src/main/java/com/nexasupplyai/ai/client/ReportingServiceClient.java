@@ -14,7 +14,7 @@ public class ReportingServiceClient {
 
     public ReportingServiceClient(
             RestClient.Builder b,
-            @Value("${clients.reporting-service.base-url}") String u
+            @Value("${clients.reporting-service.base-url:http://localhost:8084}") String u
     ) {
         cliente = b.baseUrl(u).build();
     }
