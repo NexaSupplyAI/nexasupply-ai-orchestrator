@@ -1,3 +1,22 @@
 spring:
   application:
     name: ai-orchestrator
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${JWT_ISSUER_URI}
+
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+
+clients:
+  inventory-service:
+    base-url: ${INVENTORY_SERVICE_URL:http://localhost:8081}
+  order-service:
+    base-url: ${ORDER_SERVICE_URL:http://localhost:8082}
+  supplier-service:
+    base-url: ${SUPPLIER_SERVICE_URL:http://localhost:8083}
+  reporting-service:
+    base-url: ${REPORTING_SERVICE_URL:http://localhost:8084}
