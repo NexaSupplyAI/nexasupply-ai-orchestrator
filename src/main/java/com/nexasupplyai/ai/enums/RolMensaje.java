@@ -1,9 +1,8 @@
 package com.nexasupplyai.ai.enums;
 
 public enum RolMensaje {
-
-    USUARIO,
-    ASISTENTE,
-    SISTEMA,
-    HERRAMIENTA
+    USER,
+    ASSISTANT,
+    SYSTEM,
+    TOOL
 }

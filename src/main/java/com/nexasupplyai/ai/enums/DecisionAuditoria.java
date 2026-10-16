@@ -1,8 +1,7 @@
 package com.nexasupplyai.ai.enums;
 
 public enum DecisionAuditoria {
-
-    PERMITIDA,
-    DENEGADA,
+    ALLOWED,
+    DENIED,
     ERROR
 }
