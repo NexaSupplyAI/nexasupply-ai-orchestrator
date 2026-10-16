@@ -18,28 +18,28 @@ import java.util.UUID;
 @NoArgsConstructor
 public class Conversacion {
 
- @Id
- @UuidGenerator
- @Column(name = "id", updatable = false)
- private UUID id;
+    @Id
+    @UuidGenerator
+    @Column(name = "id", updatable = false)
+    private UUID id;
 
- @Column(name = "user_object_id", nullable = false, length = 120)
- private String idUsuarioObjeto;
+    @Column(name = "user_object_id", nullable = false, length = 120)
+    private String idUsuarioObjeto;
 
- @Column(name = "title", length = 220)
- private String titulo;
+    @Column(name = "title", length = 220)
+    private String titulo;
 
- @Enumerated(EnumType.STRING)
- @Column(name = "status", nullable = false, length = 20)
- private EstadoConversacion estado = EstadoConversacion.ACTIVA;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private EstadoConversacion estado = EstadoConversacion.ACTIVA;
 
- @CreationTimestamp
- @Column(name = "started_at", nullable = false, updatable = false)
- private OffsetDateTime iniciadaEn;
+    @CreationTimestamp
+    @Column(name = "started_at", nullable = false, updatable = false)
+    private OffsetDateTime iniciadaEn;
 
- @Column(name = "last_activity_at", nullable = false)
- private OffsetDateTime ultimaActividadEn;
+    @Column(name = "last_activity_at", nullable = false)
+    private OffsetDateTime ultimaActividadEn;
 
- @Column(name = "closed_at")
- private OffsetDateTime cerradaEn;
+    @Column(name = "closed_at")
+    private OffsetDateTime cerradaEn;
 }
