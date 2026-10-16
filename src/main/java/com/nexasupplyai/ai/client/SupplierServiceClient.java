@@ -14,7 +14,7 @@ public class SupplierServiceClient {
 
     public SupplierServiceClient(
             RestClient.Builder b,
-            @Value("${clients.supplier-service.base-url}") String u
+            @Value("${clients.supplier-service.base-url:http://localhost:8083}") String u
     ) {
         cliente = b.baseUrl(u).build();
     }

@@ -1,6 +1,23 @@
+server:
+  port: 8085
+
 spring:
   application:
     name: ai-orchestrator
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/nexasupplyai}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: ai
+  flyway:
+    enabled: ${FLYWAY_ENABLED:false}
+    schemas: ai
   security:
     oauth2:
       resourceserver:
@@ -9,7 +26,7 @@ spring:
 
 app:
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
 
 clients:
   inventory-service:
@@ -20,3 +37,13 @@ clients:
     base-url: ${SUPPLIER_SERVICE_URL:http://localhost:8083}
   reporting-service:
     base-url: ${REPORTING_SERVICE_URL:http://localhost:8084}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true

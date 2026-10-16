@@ -31,7 +31,7 @@ public class Conversacion {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    private EstadoConversacion estado = EstadoConversacion.ACTIVA;
+    private EstadoConversacion estado = EstadoConversacion.ACTIVE;
 
     @CreationTimestamp
     @Column(name = "started_at", nullable = false, updatable = false)
