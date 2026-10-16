@@ -5,7 +5,7 @@ import com.nexasupplyai.ai.entity.EventoAuditoria;
 import com.nexasupplyai.ai.mapper.EventoAuditoriaMapper;
 import com.nexasupplyai.ai.repository.EventoAuditoriaRepository;
 import com.nexasupplyai.ai.service.interfaces.EventoAuditoriaServiceInterface;
-import jakarta.persistence.EntityNotFoundException;
+import com.nexasupplyai.ai.exception.EventoAuditoriaNoEncontradoException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,9 +30,7 @@ public class EventoAuditoriaServiceImpl implements EventoAuditoriaServiceInterfa
 
     public EventoAuditoriaResponse obtenerPorId(UUID id) {
         EventoAuditoria e = repositorio.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Evento no encontrado: " + id
-                ));
+                .orElseThrow(() -> new EventoAuditoriaNoEncontradoException(id));
 
         return mapper.aResponse(e);
     }

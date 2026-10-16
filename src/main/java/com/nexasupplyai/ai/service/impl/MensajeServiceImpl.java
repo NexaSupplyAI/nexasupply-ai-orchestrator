@@ -2,10 +2,10 @@ package com.nexasupplyai.ai.service.impl;
 
 import com.nexasupplyai.ai.dto.response.MensajeResponse;
 import com.nexasupplyai.ai.entity.Mensaje;
+import com.nexasupplyai.ai.exception.MensajeNoEncontradoException;
 import com.nexasupplyai.ai.mapper.MensajeMapper;
 import com.nexasupplyai.ai.repository.MensajeRepository;
 import com.nexasupplyai.ai.service.interfaces.MensajeServiceInterface;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,9 +30,7 @@ public class MensajeServiceImpl implements MensajeServiceInterface {
 
     public MensajeResponse obtenerPorId(UUID id) {
         Mensaje e = repositorio.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Mensaje no encontrado: " + id
-                ));
+                .orElseThrow(() -> new MensajeNoEncontradoException(id));
 
         return mapper.aResponse(e);
     }

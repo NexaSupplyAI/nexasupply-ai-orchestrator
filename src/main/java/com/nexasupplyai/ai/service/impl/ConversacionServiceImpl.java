@@ -3,10 +3,10 @@ package com.nexasupplyai.ai.service.impl;
 import com.nexasupplyai.ai.dto.request.ConversacionRequest;
 import com.nexasupplyai.ai.dto.response.ConversacionResponse;
 import com.nexasupplyai.ai.entity.Conversacion;
+import com.nexasupplyai.ai.exception.ConversacionNoEncontradaException;
 import com.nexasupplyai.ai.mapper.ConversacionMapper;
 import com.nexasupplyai.ai.repository.ConversacionRepository;
 import com.nexasupplyai.ai.service.interfaces.ConversacionServiceInterface;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,8 +42,6 @@ public class ConversacionServiceImpl implements ConversacionServiceInterface {
 
     private Conversacion buscar(UUID id) {
         return repositorio.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Conversación no encontrada: " + id
-                ));
+                .orElseThrow(() -> new ConversacionNoEncontradaException(id));
     }
 }
