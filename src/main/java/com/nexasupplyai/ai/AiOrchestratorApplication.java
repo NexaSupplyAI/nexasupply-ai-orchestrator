@@ -6,8 +6,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class AiOrchestratorApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(AiOrchestratorApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(AiOrchestratorApplication.class, args);
+    }
 
 }
