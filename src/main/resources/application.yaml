@@ -15,16 +15,16 @@ spring:
     properties:
       hibernate:
         default_schema: ai
-  flyway:
-    enabled: ${FLYWAY_ENABLED:false}
-    schemas: ai
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${JWT_ISSUER_URI}
+          issuer-uri: ${JWT_ISSUER_URI:http://localhost:9999}
+          jwk-set-uri: ${JWT_JWK_SET_URI:http://localhost:9999/.well-known/jwks.json}
 
 app:
+  security:
+    enabled: ${APP_SECURITY_ENABLED:true}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
 
@@ -37,6 +37,12 @@ clients:
     base-url: ${SUPPLIER_SERVICE_URL:http://localhost:8083}
   reporting-service:
     base-url: ${REPORTING_SERVICE_URL:http://localhost:8084}
+
+foundry:
+  enabled: ${FOUNDRY_ENABLED:false}
+  project-endpoint: ${FOUNDRY_PROJECT_ENDPOINT:}
+  model: ${FOUNDRY_MODEL:gpt-5-mini}
+  max-tool-rounds: ${FOUNDRY_MAX_TOOL_ROUNDS:4}
 
 management:
   endpoints:
