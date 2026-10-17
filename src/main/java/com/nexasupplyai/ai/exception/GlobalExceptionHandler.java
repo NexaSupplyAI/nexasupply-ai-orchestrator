@@ -1,57 +1,24 @@
 package com.nexasupplyai.ai.exception;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ProblemDetail;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.client.RestClientException;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-@RestControllerAdvice
-public class GlobalExceptionHandler {
-
-    @ExceptionHandler({
-            ConversacionNoEncontradaException.class,
-            MensajeNoEncontradoException.class,
-            EjecucionHerramientaNoEncontradaException.class,
-            EventoAuditoriaNoEncontradoException.class
-    })
-    ProblemDetail noEncontrado(RuntimeException e) {
-        return ProblemDetail.forStatusAndDetail(
-                HttpStatus.NOT_FOUND,
-                e.getMessage()
-        );
-    }
-
-    @ExceptionHandler({IllegalArgumentException.class})
-    ProblemDetail solicitudInvalida(RuntimeException e) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
-    }
-
-    @ExceptionHandler(SecurityException.class)
-    ProblemDetail prohibido(SecurityException e) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, e.getMessage());
-    }
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    ProblemDetail validacion(MethodArgumentNotValidException e) {
-        ProblemDetail problema = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "La solicitud contiene campos inválidos");
-        Map<String, String> errores = e.getBindingResult().getFieldErrors().stream().collect(Collectors.toMap(
-                error -> error.getField(), error -> error.getDefaultMessage() == null ? "Valor inválido" : error.getDefaultMessage(),
-                (primero, segundo) -> primero));
-        problema.setProperty("errores", errores);
-        return problema;
-    }
-
-    @ExceptionHandler(RestClientException.class)
-    ProblemDetail dependencia(RestClientException e) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_GATEWAY, "No fue posible consultar una dependencia del agente");
-    }
-
-    @ExceptionHandler(Exception.class)
-    ProblemDetail inesperado(Exception e) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, "Ocurrió un error interno en el agente");
-    }
+import com.nexasupplyai.ai.config.CorrelationIdFilter;import jakarta.servlet.http.HttpServletRequest;import org.slf4j.*;
+import org.springframework.http.*;import org.springframework.web.bind.MethodArgumentNotValidException;import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestClientException;import java.time.*;import java.util.*;import java.util.stream.Collectors;
+@RestControllerAdvice public class GlobalExceptionHandler{
+ private static final Logger log=LoggerFactory.getLogger(GlobalExceptionHandler.class);
+ @ExceptionHandler({ConversacionNoEncontradaException.class,MensajeNoEncontradoException.class,EjecucionHerramientaNoEncontradaException.class,EventoAuditoriaNoEncontradoException.class})
+ ResponseEntity<ApiError> notFound(RuntimeException e,HttpServletRequest r){return out(HttpStatus.NOT_FOUND,"RESOURCE_NOT_FOUND",e.getMessage(),r,Map.of());}
+ @ExceptionHandler(FoundryUnavailableException.class) ResponseEntity<ApiError> foundry(FoundryUnavailableException e,HttpServletRequest r){
+  return out(HttpStatus.SERVICE_UNAVAILABLE,"FOUNDRY_NOT_CONFIGURED",e.getMessage(),r,Map.of());}
+ @ExceptionHandler({IllegalArgumentException.class,IllegalStateException.class}) ResponseEntity<ApiError> invalid(RuntimeException e,HttpServletRequest r){
+  return out(HttpStatus.BAD_REQUEST,"INVALID_REQUEST",e.getMessage(),r,Map.of());}
+ @ExceptionHandler(SecurityException.class) ResponseEntity<ApiError> forbidden(SecurityException e,HttpServletRequest r){
+  return out(HttpStatus.FORBIDDEN,"ACCESS_DENIED",e.getMessage(),r,Map.of());}
+ @ExceptionHandler(MethodArgumentNotValidException.class) ResponseEntity<ApiError> validation(MethodArgumentNotValidException e,HttpServletRequest r){
+  var f=e.getBindingResult().getFieldErrors().stream().collect(Collectors.toMap(x->x.getField(),x->x.getDefaultMessage()==null?"Valor inválido":x.getDefaultMessage(),(a,b)->a));
+  return out(HttpStatus.BAD_REQUEST,"VALIDATION_ERROR","La solicitud contiene campos inválidos",r,f);}
+ @ExceptionHandler(RestClientException.class) ResponseEntity<ApiError> dependency(RestClientException e,HttpServletRequest r){log.warn("Dependencia no disponible: {}",e.getMessage());
+  return out(HttpStatus.BAD_GATEWAY,"DEPENDENCY_UNAVAILABLE","No fue posible consultar una dependencia del agente",r,Map.of());}
+ @ExceptionHandler(Exception.class) ResponseEntity<ApiError> unexpected(Exception e,HttpServletRequest r){log.error("Error inesperado",e);
+  return out(HttpStatus.INTERNAL_SERVER_ERROR,"INTERNAL_ERROR","Ocurrió un error interno en el agente",r,Map.of());}
+ private ResponseEntity<ApiError> out(HttpStatus s,String c,String m,HttpServletRequest r,Map<String,String> f){return ResponseEntity.status(s)
+  .body(new ApiError(s.value(),c,m,r.getRequestURI(),MDC.get(CorrelationIdFilter.MDC_KEY),OffsetDateTime.now(ZoneOffset.UTC),f));}
 }
