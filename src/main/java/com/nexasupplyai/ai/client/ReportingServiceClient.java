@@ -25,4 +25,8 @@ public class ReportingServiceClient {
                 .retrieve()
                 .body(Map.class);
     }
+
+    public Map generarDashboard() {
+        return cliente.post().uri("/api/v1/snapshots-panel/generar").retrieve().body(Map.class);
+    }
 }
