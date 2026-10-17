@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: ${AZURE_POSTGRESQL_JDBC_URL}
+    username: ${AZURE_POSTGRESQL_USERNAME}
+    hikari:
+      data-source-properties:
+        sslmode: require
+        authenticationPluginClassName: com.azure.identity.extensions.jdbc.postgresql.AzurePostgresqlAuthenticationPlugin
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${AZURE_ENTRA_ISSUER_URI}
+          audiences: ${AZURE_ENTRA_AUDIENCE}
+app:
+  security:
+    enabled: ${APP_SECURITY_ENABLED:true}
