@@ -9,7 +9,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/chat")
+@RequestMapping({"/api/v1/ai/chat", "/api/v1/chat"})
 @RequiredArgsConstructor
 public class ChatController {
     private final ChatService servicio;
