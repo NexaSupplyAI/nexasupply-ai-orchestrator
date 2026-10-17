@@ -11,6 +11,4 @@ import java.util.UUID;
 public interface EventoAuditoriaRepository extends JpaRepository<EventoAuditoria, UUID> {
 
     List<EventoAuditoria> findAllByIdUsuarioObjetoOrderByCreadoEnDesc(String idUsuarioObjeto);
-
-    List<EventoAuditoria> findAllByConversacionIdOrderByCreadoEnDesc(UUID idConversacion);
 }
