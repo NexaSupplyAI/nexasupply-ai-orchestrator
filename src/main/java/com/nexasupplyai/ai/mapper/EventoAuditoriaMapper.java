@@ -1,6 +1,5 @@
 package com.nexasupplyai.ai.mapper;
 
-import com.nexasupplyai.ai.dto.request.EventoAuditoriaRequest;
 import com.nexasupplyai.ai.dto.response.EventoAuditoriaResponse;
 import com.nexasupplyai.ai.entity.EventoAuditoria;
 import org.mapstruct.*;
