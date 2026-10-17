@@ -1,12 +1,13 @@
 # AI Orchestrator
 
-Base del orquestador de IA de NexaSupply AI. Es propietario del esquema PostgreSQL `ai` para conversaciones, mensajes, ejecuciones de herramientas y auditoría.
+Orquestador de IA de NexaSupply AI. Es propietario del esquema PostgreSQL `ai` para conversaciones, mensajes, ejecuciones de herramientas y auditoría.
 
-## Responsabilidades actuales
+## Responsabilidades
 
 - Crear y consultar conversaciones.
-- Consultar mensajes, ejecuciones de herramientas y eventos de auditoría ya almacenados.
-- Exponer adaptadores Java para consultar inventario, pedidos, proveedores y reportes.
+- Invocar Microsoft Foundry mediante Responses API y Managed Identity.
+- Ejecutar exclusivamente herramientas de dominio registradas.
+- Persistir automáticamente mensajes, ejecuciones y auditoría.
 - Propagar `Authorization` y `X-Correlation-ID` a los servicios de dominio.
 
 ## Configuración
@@ -16,13 +17,17 @@ Base del orquestador de IA de NexaSupply AI. Es propietario del esquema PostgreS
 | `DB_URL` | No | `jdbc:postgresql://localhost:5432/nexasupplyai` |
 | `DB_USER` | No | `postgres` |
 | `DB_PASSWORD` | No | `postgres` |
-| `JWT_ISSUER_URI` | Sí | Sin valor |
+| `JWT_ISSUER_URI` | Producción | `http://localhost:9999` |
+| `JWT_JWK_SET_URI` | Producción | `http://localhost:9999/.well-known/jwks.json` |
+| `APP_SECURITY_ENABLED` | No | `true` |
 | `CORS_ALLOWED_ORIGINS` | No | `http://localhost:4200` |
 | `INVENTORY_SERVICE_URL` | No | `http://localhost:8081` |
 | `ORDER_SERVICE_URL` | No | `http://localhost:8082` |
 | `SUPPLIER_SERVICE_URL` | No | `http://localhost:8083` |
 | `REPORTING_SERVICE_URL` | No | `http://localhost:8084` |
-| `FLYWAY_ENABLED` | No | `false` |
+| `FOUNDRY_ENABLED` | No | `false` |
+| `FOUNDRY_PROJECT_ENDPOINT` | Si Foundry está activo | Sin valor |
+| `FOUNDRY_MODEL` | No | `gpt-5-mini` |
 
 Inicializa la base con [`../nexasupplyai.sql`](../nexasupplyai.sql).
 
@@ -52,7 +57,7 @@ docker run --rm --add-host=host.docker.internal:host-gateway \
   nexasupply/ai-orchestrator:local
 ```
 
-## API actual
+## API
 
 | Método | Ruta | Uso |
 |---|---|---|
@@ -65,6 +70,7 @@ docker run --rm --add-host=host.docker.internal:host-gateway \
 | `GET` | `/api/v1/ejecuciones-herramienta/{id}` | Consultar ejecución |
 | `GET` | `/api/v1/eventos-auditoria?idUsuario={entraObjectId}` | Listar auditoría |
 | `GET` | `/api/v1/eventos-auditoria/{id}` | Consultar evento |
+| `POST` | `/api/v1/chat` | Enviar mensaje; crea o continúa una conversación |
 
 Estados de conversación: `ACTIVE`, `CLOSED`, `ARCHIVED`. Roles: `USER`, `ASSISTANT`, `SYSTEM`, `TOOL`.
 
@@ -75,13 +81,8 @@ Estados de conversación: `ACTIVE`, `CLOSED`, `ARCHIVED`. Roles: `USER`, `ASSIST
 ./mvnw clean package
 ```
 
-## Estado de la integración de IA
+## Integración Foundry
 
-Este módulo todavía **no integra Microsoft Foundry Agent Service ni un modelo**. Las clases `agent` y `tool` son adaptadores locales y no existe todavía un endpoint de chat que invoque un agente. Antes de producción faltan:
+El cliente obtiene un token Entra para `https://ai.azure.com/.default` con `DefaultAzureCredential` y llama a `{FOUNDRY_PROJECT_ENDPOINT}/openai/v1/responses`. Procesa ciclos de `function_call` con un máximo configurable y solo permite estas herramientas de consulta: stock de producto, stock bajo, pedidos pendientes, proveedor y dashboard. Las conversaciones se aíslan por el `sub` del JWT.
 
-- Cliente/SDK de Foundry y configuración por Managed Identity.
-- Registro real de tools con contratos tipados; evitar `Map` sin tipo.
-- Endpoint de chat o streaming.
-- Persistencia automática de mensajes, tool calls y auditoría.
-- Autorización por roles y comprobación de que el usuario solo consulta sus conversaciones.
-- Confirmación humana para acciones como crear borradores de compra.
+Cuando `FOUNDRY_ENABLED=false`, existe un fallback local determinista para demostrar consultas de stock, pedidos y dashboard sin consumir un modelo. No se exponen herramientas destructivas ni compras automáticas.
