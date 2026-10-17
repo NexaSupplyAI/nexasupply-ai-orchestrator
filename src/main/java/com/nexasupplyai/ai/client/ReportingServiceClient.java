@@ -1,11 +1,10 @@
 package com.nexasupplyai.ai.client;
 
+import com.nexasupplyai.ai.dto.external.DashboardResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
-import java.util.Map;
-import java.util.UUID;
 
 @Component
 public class ReportingServiceClient {
@@ -19,14 +18,7 @@ public class ReportingServiceClient {
         cliente = b.baseUrl(u).build();
     }
 
-    public Map obtenerSnapshot(UUID id) {
-        return cliente.get()
-                .uri("/api/v1/snapshots-panel/{id}", id)
-                .retrieve()
-                .body(Map.class);
-    }
-
-    public Map generarDashboard() {
-        return cliente.post().uri("/api/v1/snapshots-panel/generar").retrieve().body(Map.class);
+    public DashboardResponse obtenerDashboard() {
+        return cliente.get().uri("/api/v1/reportes/dashboard").retrieve().body(DashboardResponse.class);
     }
 }
