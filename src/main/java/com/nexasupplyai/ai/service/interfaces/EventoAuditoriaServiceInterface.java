@@ -9,5 +9,5 @@ public interface EventoAuditoriaServiceInterface {
 
     List<EventoAuditoriaResponse> listarPorUsuario(String idUsuario);
 
-    EventoAuditoriaResponse obtenerPorId(UUID id);
+    EventoAuditoriaResponse obtenerPorId(UUID id, String idUsuario, boolean admin);
 }
