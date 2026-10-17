@@ -28,10 +28,12 @@ public class EventoAuditoriaServiceImpl implements EventoAuditoriaServiceInterfa
                 .toList();
     }
 
-    public EventoAuditoriaResponse obtenerPorId(UUID id) {
+    public EventoAuditoriaResponse obtenerPorId(UUID id, String idUsuario, boolean admin) {
         EventoAuditoria e = repositorio.findById(id)
                 .orElseThrow(() -> new EventoAuditoriaNoEncontradoException(id));
-
+        if (!admin && !e.getIdUsuarioObjeto().equals(idUsuario)) {
+            throw new SecurityException("No tiene acceso a este evento de auditoría");
+        }
         return mapper.aResponse(e);
     }
 }
