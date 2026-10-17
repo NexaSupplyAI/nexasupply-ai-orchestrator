@@ -11,6 +11,4 @@ import java.util.UUID;
 public interface MensajeRepository extends JpaRepository<Mensaje, UUID> {
 
     List<Mensaje> findAllByConversacionIdOrderByCreadoEnAsc(UUID idConversacion);
-
-    List<Mensaje> findAllByIdCorrelacion(UUID idCorrelacion);
 }
