@@ -7,7 +7,7 @@ import java.util.UUID;
 
 public interface EjecucionHerramientaServiceInterface {
 
-    List<EjecucionHerramientaResponse> listarPorConversacion(UUID idConversacion);
+    List<EjecucionHerramientaResponse> listarPorConversacion(UUID idConversacion, String idUsuario, boolean admin);
 
-    EjecucionHerramientaResponse obtenerPorId(UUID id);
+    EjecucionHerramientaResponse obtenerPorId(UUID id, String idUsuario, boolean admin);
 }
