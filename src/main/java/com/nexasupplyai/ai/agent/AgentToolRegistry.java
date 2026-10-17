@@ -35,9 +35,9 @@ public class AgentToolRegistry {
             case "get_low_stock_products" -> Map.of("productos", inventario.obtenerStockBajo());
             case "get_pending_orders" -> Map.of("pedidos", pedidos.listarOrdenes().stream()
                     .filter(p -> Set.of("PENDING", "CONFIRMED", "PROCESSING")
-                            .contains(String.valueOf(p.get("estado")))).toList());
+                            .contains(p.estado())).toList());
             case "get_supplier_information" -> Map.of("proveedor", proveedores.obtenerProveedor(uuid(argumentos)));
-            case "get_dashboard" -> Map.of("dashboard", reportes.generarDashboard());
+            case "get_dashboard" -> Map.of("dashboard", reportes.obtenerDashboard());
             default -> throw new IllegalArgumentException("Herramienta no autorizada: " + nombre);
         };
     }
