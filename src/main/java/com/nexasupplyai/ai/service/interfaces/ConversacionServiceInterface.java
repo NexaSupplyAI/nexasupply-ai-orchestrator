@@ -10,7 +10,7 @@ public interface ConversacionServiceInterface {
 
     List<ConversacionResponse> listarPorUsuario(String idUsuario);
 
-    ConversacionResponse obtenerPorId(UUID id);
+    ConversacionResponse obtenerPorId(UUID id, String idUsuario, boolean admin);
 
-    ConversacionResponse crear(ConversacionRequest request);
+    ConversacionResponse crear(ConversacionRequest request, String idUsuario);
 }
