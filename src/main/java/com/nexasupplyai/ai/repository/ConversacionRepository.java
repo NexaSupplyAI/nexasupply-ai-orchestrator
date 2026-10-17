@@ -1,7 +1,6 @@
 package com.nexasupplyai.ai.repository;
 
 import com.nexasupplyai.ai.entity.Conversacion;
-import com.nexasupplyai.ai.enums.EstadoConversacion;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,5 +12,4 @@ public interface ConversacionRepository extends JpaRepository<Conversacion, UUID
 
     List<Conversacion> findAllByIdUsuarioObjetoOrderByUltimaActividadEnDesc(String idUsuarioObjeto);
 
-    List<Conversacion> findAllByEstado(EstadoConversacion estado);
 }
