@@ -7,7 +7,7 @@ import java.util.UUID;
 
 public interface MensajeServiceInterface {
 
-    List<MensajeResponse> listarPorConversacion(UUID idConversacion);
+    List<MensajeResponse> listarPorConversacion(UUID idConversacion, String idUsuario, boolean admin);
 
-    MensajeResponse obtenerPorId(UUID id);
+    MensajeResponse obtenerPorId(UUID id, String idUsuario, boolean admin);
 }
