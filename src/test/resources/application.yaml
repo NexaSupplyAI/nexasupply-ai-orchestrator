@@ -1,4 +1,6 @@
 spring:
+  profiles:
+    active: test
   datasource:
     url: jdbc:h2:mem:ai-test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
     username: sa
@@ -6,9 +8,9 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
+    open-in-view: false
+app:
   security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: https://issuer.example.test
-          jwk-set-uri: http://localhost/unused-jwks
+    enabled: false
+foundry:
+  enabled: false
