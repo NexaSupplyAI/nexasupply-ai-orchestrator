@@ -1,6 +1,5 @@
 package com.nexasupplyai.ai.mapper;
 
-import com.nexasupplyai.ai.dto.request.MensajeRequest;
 import com.nexasupplyai.ai.dto.response.MensajeResponse;
 import com.nexasupplyai.ai.entity.*;
 import org.mapstruct.*;
