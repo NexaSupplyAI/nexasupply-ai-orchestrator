@@ -1,10 +1,10 @@
 package com.nexasupplyai.ai.client;
 
+import com.nexasupplyai.ai.dto.external.ProveedorResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
-import java.util.Map;
 import java.util.UUID;
 
 @Component
@@ -19,10 +19,10 @@ public class SupplierServiceClient {
         cliente = b.baseUrl(u).build();
     }
 
-    public Map obtenerProveedor(UUID id) {
+    public ProveedorResponse obtenerProveedor(UUID id) {
         return cliente.get()
                 .uri("/api/v1/proveedores/{id}", id)
                 .retrieve()
-                .body(Map.class);
+                .body(ProveedorResponse.class);
     }
 }
