@@ -13,6 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import com.nexasupplyai.ai.enums.EstadoConversacion;
 
 @Service
 @RequiredArgsConstructor
@@ -29,19 +32,30 @@ public class ConversacionServiceImpl implements ConversacionServiceInterface {
                 .toList();
     }
 
-    public ConversacionResponse obtenerPorId(UUID id) {
-        return mapper.aResponse(buscar(id));
+    public ConversacionResponse obtenerPorId(UUID id, String idUsuario, boolean admin) {
+        Conversacion conversacion = buscar(id);
+        validarPropietario(conversacion, idUsuario, admin);
+        return mapper.aResponse(conversacion);
     }
 
     @Transactional
-    public ConversacionResponse crear(ConversacionRequest r) {
-        return mapper.aResponse(
-                repositorio.save(mapper.aEntidad(r))
-        );
+    public ConversacionResponse crear(ConversacionRequest r, String idUsuario) {
+        Conversacion conversacion = new Conversacion();
+        conversacion.setIdUsuarioObjeto(idUsuario);
+        conversacion.setTitulo(r.titulo());
+        conversacion.setEstado(EstadoConversacion.ACTIVE);
+        conversacion.setUltimaActividadEn(OffsetDateTime.now(ZoneOffset.UTC));
+        return mapper.aResponse(repositorio.save(conversacion));
     }
 
     private Conversacion buscar(UUID id) {
         return repositorio.findById(id)
                 .orElseThrow(() -> new ConversacionNoEncontradaException(id));
+    }
+
+    private void validarPropietario(Conversacion conversacion, String idUsuario, boolean admin) {
+        if (!admin && !conversacion.getIdUsuarioObjeto().equals(idUsuario)) {
+            throw new SecurityException("No tiene acceso a esta conversación");
+        }
     }
 }
