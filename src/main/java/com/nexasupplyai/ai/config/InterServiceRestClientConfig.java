@@ -1,32 +1,29 @@
 package com.nexasupplyai.ai.config;
 
-import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.restclient.RestClientCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpHeaders;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
+import java.net.http.HttpClient;
+import java.time.Duration;
+import java.util.UUID;
 
 @Configuration
 public class InterServiceRestClientConfig {
 
     @Bean
-    RestClientCustomizer propagarCabecerasDeSolicitud() {
+    RestClientCustomizer configurarClientes(InterServiceAuthenticationProvider auth,
+            @Value("${clients.http.connect-timeout:3s}") Duration connect,
+            @Value("${clients.http.read-timeout:10s}") Duration read) {
+        var factory=new JdkClientHttpRequestFactory(HttpClient.newBuilder().connectTimeout(connect).build());
+        factory.setReadTimeout(read);
         return builder -> builder.requestInterceptor((request, body, execution) -> {
-            if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes atributos) {
-                HttpServletRequest solicitud = atributos.getRequest();
-                copiarSiExiste(solicitud, request.getHeaders(), HttpHeaders.AUTHORIZATION);
-                copiarSiExiste(solicitud, request.getHeaders(), "X-Correlation-ID");
-            }
+            String id=MDC.get(CorrelationIdFilter.MDC_KEY);
+            request.getHeaders().set(CorrelationIdFilter.HEADER,id==null?UUID.randomUUID().toString():id);
+            auth.apply(request.getHeaders());
             return execution.execute(request, body);
-        });
-    }
-
-    private void copiarSiExiste(HttpServletRequest origen, HttpHeaders destino, String nombre) {
-        String valor = origen.getHeader(nombre);
-        if (valor != null && !valor.isBlank()) {
-            destino.set(nombre, valor);
-        }
+        }).requestFactory(factory);
     }
 }
