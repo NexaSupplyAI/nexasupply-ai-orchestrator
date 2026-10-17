@@ -1,7 +1,6 @@
 package com.nexasupplyai.ai.repository;
 
 import com.nexasupplyai.ai.entity.EjecucionHerramienta;
-import com.nexasupplyai.ai.enums.EstadoEjecucionHerramienta;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,8 +12,4 @@ public interface EjecucionHerramientaRepository extends JpaRepository<EjecucionH
 
     List<EjecucionHerramienta> findAllByConversacionIdOrderByCreadoEnDesc(UUID idConversacion);
 
-    List<EjecucionHerramienta> findAllByNombreHerramientaAndEstado(
-            String nombreHerramienta,
-            EstadoEjecucionHerramienta estado
-    );
 }
