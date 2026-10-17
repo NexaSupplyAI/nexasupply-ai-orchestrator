@@ -4,14 +4,17 @@ import com.azure.core.credential.TokenRequestContext;
 import com.azure.identity.DefaultAzureCredential;
 import com.azure.identity.DefaultAzureCredentialBuilder;
 import com.nexasupplyai.ai.prompt.PromptsSistema;
-import lombok.RequiredArgsConstructor;
+import com.nexasupplyai.ai.exception.FoundryUnavailableException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.*;
+import java.net.http.HttpClient;
+import java.time.Duration;
 
 @Component
 public class FoundryResponsesClient {
@@ -23,12 +26,13 @@ public class FoundryResponsesClient {
     private final ObjectMapper objectMapper;
     private final AgentToolRegistry herramientas;
 
-    public FoundryResponsesClient(RestClient.Builder builder, ObjectMapper objectMapper,
-                                  AgentToolRegistry herramientas,
+    public FoundryResponsesClient(ObjectMapper objectMapper, AgentToolRegistry herramientas,
                                   @Value("${foundry.enabled:false}") boolean enabled,
                                   @Value("${foundry.project-endpoint:}") String endpoint,
                                   @Value("${foundry.model:gpt-5-mini}") String modelo,
-                                  @Value("${foundry.max-tool-rounds:4}") int maxRondas) {
+                                  @Value("${foundry.max-tool-rounds:4}") int maxRondas,
+                                  @Value("${foundry.connect-timeout:5s}") Duration connectTimeout,
+                                  @Value("${foundry.read-timeout:60s}") Duration readTimeout) {
         this.enabled = enabled;
         this.modelo = modelo;
         this.maxRondas = maxRondas;
@@ -36,12 +40,20 @@ public class FoundryResponsesClient {
         this.herramientas = herramientas;
         if (enabled && (endpoint == null || endpoint.isBlank()))
             throw new IllegalStateException("FOUNDRY_PROJECT_ENDPOINT es obligatorio cuando FOUNDRY_ENABLED=true");
-        this.cliente = enabled ? builder.baseUrl(endpoint).build() : null;
+        if (maxRondas < 1) throw new IllegalArgumentException("FOUNDRY_MAX_TOOL_ROUNDS debe ser mayor que cero");
+        if (enabled) {
+            var factory = new JdkClientHttpRequestFactory(HttpClient.newBuilder()
+                    .connectTimeout(connectTimeout).build());
+            factory.setReadTimeout(readTimeout);
+            this.cliente = RestClient.builder().baseUrl(endpoint).requestFactory(factory).build();
+        } else {
+            this.cliente = null;
+        }
         this.credencial = enabled ? new DefaultAzureCredentialBuilder().build() : null;
     }
 
     public Resultado responder(List<Map<String, Object>> historial, String pregunta) {
-        if (!enabled) return respuestaLocal(pregunta);
+        if (!enabled) throw new FoundryUnavailableException();
         List<Map<String, Object>> invocaciones = new ArrayList<>();
         Map<String, Object> cuerpo = new LinkedHashMap<>();
         cuerpo.put("model", modelo);
@@ -95,7 +107,7 @@ public class FoundryResponsesClient {
         String token = Objects.requireNonNull(credencial.getToken(
                 new TokenRequestContext().addScopes("https://ai.azure.com/.default")).block()).getToken();
         Map<String, Object> respuesta = cliente.post().uri("/openai/v1/responses")
-                .header("Authorization", "Bearer " + token).body(cuerpo).retrieve()
+                .headers(headers -> headers.setBearerAuth(token)).body(cuerpo).retrieve()
                 .body(new org.springframework.core.ParameterizedTypeReference<>() {});
         if (respuesta == null) throw new IllegalStateException("Foundry devolvió una respuesta vacía");
         return respuesta;
@@ -125,25 +137,6 @@ public class FoundryResponsesClient {
         if (texto == null || texto.isBlank()) texto = "Foundry no produjo contenido textual.";
         Map<String, Object> uso = respuesta.get("usage") instanceof Map<?, ?> m ? (Map<String, Object>) m : Map.of();
         return new Resultado(texto, modelo, entero(uso.get("input_tokens")), entero(uso.get("output_tokens")), invocaciones);
-    }
-
-    private Resultado respuestaLocal(String pregunta) {
-        String normalizada = pregunta.toLowerCase(Locale.ROOT);
-        String herramienta = normalizada.contains("stock") ? "get_low_stock_products"
-                : normalizada.contains("pedido") ? "get_pending_orders"
-                : normalizada.contains("dashboard") || normalizada.contains("reporte") ? "get_dashboard" : null;
-        if (herramienta == null) return new Resultado(
-                "El modo local está activo. Configure FOUNDRY_ENABLED=true y FOUNDRY_PROJECT_ENDPOINT para respuestas generativas; puedo consultar stock, pedidos o el dashboard.",
-                "local-fallback", 0, 0, List.of());
-        long inicio = System.nanoTime();
-        Map<String, Object> salida = herramientas.ejecutar(herramienta, Map.of());
-        int duracion = (int) ((System.nanoTime() - inicio) / 1_000_000L);
-        String texto;
-        try { texto = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(salida); }
-        catch (Exception ex) { texto = String.valueOf(salida); }
-        return new Resultado(texto, "local-fallback", 0, 0,
-                List.of(Map.of("nombre", herramienta, "argumentos", Map.of(), "respuesta", salida,
-                        "duracionMs", duracion, "estado", "SUCCESS")));
     }
 
     private int entero(Object valor) { return valor instanceof Number n ? n.intValue() : 0; }
