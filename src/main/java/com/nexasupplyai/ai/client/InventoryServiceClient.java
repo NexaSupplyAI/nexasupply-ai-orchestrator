@@ -1,10 +1,11 @@
 package com.nexasupplyai.ai.client;
 
+import com.nexasupplyai.ai.dto.external.ProductoResponse;
+import com.nexasupplyai.ai.dto.external.SaldoInventarioResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
-import java.util.Map;
 import java.util.UUID;
 import java.util.List;
 import org.springframework.core.ParameterizedTypeReference;
@@ -21,22 +22,22 @@ public class InventoryServiceClient {
         cliente = b.baseUrl(u).build();
     }
 
-    public Map obtenerProducto(UUID id) {
+    public ProductoResponse obtenerProducto(UUID id) {
         return cliente.get()
                 .uri("/api/v1/productos/{id}", id)
                 .retrieve()
-                .body(Map.class);
+                .body(ProductoResponse.class);
     }
 
-    public List<Map<String, Object>> obtenerSaldos(UUID idProducto) {
-        List<Map<String, Object>> resultado = cliente.get()
+    public List<SaldoInventarioResponse> obtenerSaldos(UUID idProducto) {
+        List<SaldoInventarioResponse> resultado = cliente.get()
                 .uri(uri -> uri.path("/api/v1/saldos-inventario").queryParam("idProducto", idProducto).build())
                 .retrieve().body(new ParameterizedTypeReference<>() {});
         return resultado == null ? List.of() : resultado;
     }
 
-    public List<Map<String, Object>> obtenerStockBajo() {
-        List<Map<String, Object>> resultado = cliente.get().uri("/api/v1/saldos-inventario/stock-bajo")
+    public List<SaldoInventarioResponse> obtenerStockBajo() {
+        List<SaldoInventarioResponse> resultado = cliente.get().uri("/api/v1/saldos-inventario/stock-bajo")
                 .retrieve().body(new ParameterizedTypeReference<>() {});
         return resultado == null ? List.of() : resultado;
     }
