@@ -17,6 +17,11 @@ spring:
 app:
   security:
     enabled: ${APP_SECURITY_ENABLED:false}
+    internal-jwt:
+      enabled: ${INTERNAL_JWT_ENABLED:false}
+      secret: ${INTERNAL_JWT_SECRET:}
+      issuer: ${INTERNAL_JWT_ISSUER:nexasupply-portal}
+      audience: ${INTERNAL_JWT_AUDIENCE:nexasupply-internal-api}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
 
@@ -40,7 +45,11 @@ foundry:
   enabled: ${FOUNDRY_ENABLED:false}
   project-endpoint: ${FOUNDRY_PROJECT_ENDPOINT:}
   model: ${FOUNDRY_MODEL:}
-  max-tool-rounds: ${FOUNDRY_MAX_TOOL_ROUNDS:4}
+  token-scope: ${FOUNDRY_TOKEN_SCOPE:https://cognitiveservices.azure.com/.default}
+  max-tool-rounds: ${FOUNDRY_MAX_TOOL_ROUNDS:3}
+  max-output-tokens: ${FOUNDRY_MAX_OUTPUT_TOKENS:800}
+  max-history-messages: ${FOUNDRY_MAX_HISTORY_MESSAGES:12}
+  max-history-characters: ${FOUNDRY_MAX_HISTORY_CHARACTERS:24000}
   connect-timeout: ${FOUNDRY_CONNECT_TIMEOUT:5s}
   read-timeout: ${FOUNDRY_READ_TIMEOUT:60s}
 

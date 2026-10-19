@@ -2,6 +2,7 @@ package com.nexasupplyai.ai.agent;
 
 import com.nexasupplyai.ai.client.*;
 import com.nexasupplyai.ai.dto.external.PedidoResponse;
+import com.nexasupplyai.ai.dto.external.ProductoResponse;
 import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.util.List;
@@ -33,6 +34,21 @@ class AgentToolRegistryTest {
         var registry = new AgentToolRegistry(mock(InventoryServiceClient.class), mock(OrderServiceClient.class),
                 mock(SupplierServiceClient.class), mock(ReportingServiceClient.class));
         assertThrows(IllegalArgumentException.class, () -> registry.ejecutar("delete_product", Map.of()));
+    }
+
+    @Test
+    void stockDeProductoUsaIdProductoExplicito() {
+        InventoryServiceClient inventario = mock(InventoryServiceClient.class);
+        UUID idProducto = UUID.randomUUID();
+        when(inventario.obtenerProducto(idProducto)).thenReturn(mock(ProductoResponse.class));
+        when(inventario.obtenerSaldos(idProducto)).thenReturn(List.of());
+        AgentToolRegistry registry = new AgentToolRegistry(inventario, mock(OrderServiceClient.class),
+                mock(SupplierServiceClient.class), mock(ReportingServiceClient.class));
+
+        registry.ejecutar("get_product_stock", Map.of("idProducto", idProducto.toString()));
+
+        verify(inventario).obtenerProducto(idProducto);
+        verify(inventario).obtenerSaldos(idProducto);
     }
 
     private PedidoResponse pedido(String estado) {

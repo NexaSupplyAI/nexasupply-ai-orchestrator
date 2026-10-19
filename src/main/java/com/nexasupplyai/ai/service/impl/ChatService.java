@@ -36,7 +36,7 @@ public class ChatService {
                 .map(m -> Map.<String, Object>of("role", m.getRol() == RolMensaje.USER ? "user" : "assistant",
                         "content", m.getContenido())).toList();
         try {
-            FoundryResponsesClient.Resultado resultado = foundry.responder(historial, request.mensaje());
+            FoundryResponsesClient.Resultado resultado = foundry.responder(historial);
             Mensaje asistente = guardarMensaje(conversacion, RolMensaje.ASSISTANT, resultado.texto(),
                     resultado.modelo(), resultado.tokensEntrada(), resultado.tokensSalida(), correlacion);
             List<EjecucionHerramienta> herramientas = resultado.invocaciones().stream()

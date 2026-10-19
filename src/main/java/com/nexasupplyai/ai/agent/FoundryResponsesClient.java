@@ -20,7 +20,11 @@ import java.time.Duration;
 public class FoundryResponsesClient {
     private final boolean enabled;
     private final String modelo;
+    private final String tokenScope;
     private final int maxRondas;
+    private final int maxTokensSalida;
+    private final int maxMensajesHistorial;
+    private final int maxCaracteresHistorial;
     private final RestClient cliente;
     private final DefaultAzureCredential credencial;
     private final ObjectMapper objectMapper;
@@ -30,17 +34,30 @@ public class FoundryResponsesClient {
                                   @Value("${foundry.enabled:false}") boolean enabled,
                                   @Value("${foundry.project-endpoint:}") String endpoint,
                                   @Value("${foundry.model:gpt-5-mini}") String modelo,
+                                  @Value("${foundry.token-scope:https://cognitiveservices.azure.com/.default}") String tokenScope,
                                   @Value("${foundry.max-tool-rounds:4}") int maxRondas,
+                                  @Value("${foundry.max-output-tokens:800}") int maxTokensSalida,
+                                  @Value("${foundry.max-history-messages:12}") int maxMensajesHistorial,
+                                  @Value("${foundry.max-history-characters:24000}") int maxCaracteresHistorial,
                                   @Value("${foundry.connect-timeout:5s}") Duration connectTimeout,
                                   @Value("${foundry.read-timeout:60s}") Duration readTimeout) {
         this.enabled = enabled;
         this.modelo = modelo;
+        this.tokenScope = tokenScope;
         this.maxRondas = maxRondas;
+        this.maxTokensSalida = maxTokensSalida;
+        this.maxMensajesHistorial = maxMensajesHistorial;
+        this.maxCaracteresHistorial = maxCaracteresHistorial;
         this.objectMapper = objectMapper;
         this.herramientas = herramientas;
         if (enabled && (endpoint == null || endpoint.isBlank()))
             throw new IllegalStateException("FOUNDRY_PROJECT_ENDPOINT es obligatorio cuando FOUNDRY_ENABLED=true");
+        if (enabled && (modelo == null || modelo.isBlank()))
+            throw new IllegalStateException("FOUNDRY_MODEL es obligatorio cuando FOUNDRY_ENABLED=true");
         if (maxRondas < 1) throw new IllegalArgumentException("FOUNDRY_MAX_TOOL_ROUNDS debe ser mayor que cero");
+        if (maxTokensSalida < 1) throw new IllegalArgumentException("FOUNDRY_MAX_OUTPUT_TOKENS debe ser mayor que cero");
+        if (maxMensajesHistorial < 1) throw new IllegalArgumentException("FOUNDRY_MAX_HISTORY_MESSAGES debe ser mayor que cero");
+        if (maxCaracteresHistorial < 1) throw new IllegalArgumentException("FOUNDRY_MAX_HISTORY_CHARACTERS debe ser mayor que cero");
         if (enabled) {
             var factory = new JdkClientHttpRequestFactory(HttpClient.newBuilder()
                     .connectTimeout(connectTimeout).build());
@@ -52,15 +69,16 @@ public class FoundryResponsesClient {
         this.credencial = enabled ? new DefaultAzureCredentialBuilder().build() : null;
     }
 
-    public Resultado responder(List<Map<String, Object>> historial, String pregunta) {
+    public Resultado responder(List<Map<String, Object>> historial) {
         if (!enabled) throw new FoundryUnavailableException();
         List<Map<String, Object>> invocaciones = new ArrayList<>();
         Map<String, Object> cuerpo = new LinkedHashMap<>();
         cuerpo.put("model", modelo);
         cuerpo.put("instructions", PromptsSistema.ASISTENTE_NEXA_SUPPLY + "\n"
                 + PromptsSistema.INVENTARIO + PromptsSistema.PEDIDOS + PromptsSistema.PROVEEDORES + PromptsSistema.REPORTES);
-        cuerpo.put("input", historial);
+        cuerpo.put("input", limitarHistorial(historial));
         cuerpo.put("tools", herramientas.definiciones());
+        cuerpo.put("max_output_tokens", maxTokensSalida);
 
         Map<String, Object> respuesta = invocar(cuerpo);
         for (int ronda = 0; ronda < maxRondas; ronda++) {
@@ -98,6 +116,7 @@ public class FoundryResponsesClient {
             cuerpo.put("previous_response_id", respuesta.get("id"));
             cuerpo.put("input", salidas);
             cuerpo.put("tools", herramientas.definiciones());
+            cuerpo.put("max_output_tokens", maxTokensSalida);
             respuesta = invocar(cuerpo);
         }
         throw new IllegalStateException("El agente superó el máximo de rondas de herramientas");
@@ -105,7 +124,7 @@ public class FoundryResponsesClient {
 
     private Map<String, Object> invocar(Map<String, Object> cuerpo) {
         String token = Objects.requireNonNull(credencial.getToken(
-                new TokenRequestContext().addScopes("https://ai.azure.com/.default")).block()).getToken();
+                new TokenRequestContext().addScopes(tokenScope)).block()).getToken();
         Map<String, Object> respuesta = cliente.post().uri("/openai/v1/responses")
                 .headers(headers -> headers.setBearerAuth(token)).body(cuerpo).retrieve()
                 .body(new org.springframework.core.ParameterizedTypeReference<>() {});
@@ -140,6 +159,20 @@ public class FoundryResponsesClient {
     }
 
     private int entero(Object valor) { return valor instanceof Number n ? n.intValue() : 0; }
+
+    List<Map<String, Object>> limitarHistorial(List<Map<String, Object>> historial) {
+        if (historial == null || historial.isEmpty()) return List.of();
+        LinkedList<Map<String, Object>> resultado = new LinkedList<>();
+        int caracteres = 0;
+        for (int i = historial.size() - 1; i >= 0 && resultado.size() < maxMensajesHistorial; i--) {
+            Map<String, Object> mensaje = historial.get(i);
+            int longitud = String.valueOf(mensaje.getOrDefault("content", "")).length();
+            if (!resultado.isEmpty() && caracteres + longitud > maxCaracteresHistorial) break;
+            resultado.addFirst(mensaje);
+            caracteres += longitud;
+        }
+        return List.copyOf(resultado);
+    }
 
     public record Resultado(String texto, String modelo, int tokensEntrada, int tokensSalida,
                             List<Map<String, Object>> invocaciones) {}

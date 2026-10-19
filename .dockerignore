@@ -1,6 +1,7 @@
 .git
 .idea
-target
+target/*
+!target/*-SNAPSHOT.jar
 *.iml
 HELP.md
 README.md
